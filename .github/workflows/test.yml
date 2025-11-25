@@ -36,6 +36,16 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
     - name: Install dependencies
       run: bundle install
+
+    - name: patch
+      run: |
+        #! ruby
+        path = $".find {|n| n.end_with?("/lib/test/unit/assertions.rb")}
+        dir = File.dirname(path)
+        puts "patching files under #{dir}"
+        exec("patch", "-p4", "-d", dir, in: "test-unit.patch")
+      shell: bundle exec ruby -rtest/unit/assertions {0}
+
     - name: Build
       run: rake compile
     - name: Run test

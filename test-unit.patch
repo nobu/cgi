@@ -1,0 +1,54 @@
+commit 23fb923209027623e8ba64b7b7ca3e3cd7611c3b
+Author:     Nobuyoshi Nakada <nobu@ruby-lang.org>
+AuthorDate: 2025-11-25 19:01:51 +0900
+Commit:     Nobuyoshi Nakada <nobu@ruby-lang.org>
+CommitDate: 2025-11-25 19:01:51 +0900
+
+    Move suppressing experimental warnings
+    
+    Fix up #335.
+    
+    `power_assert` is required in util/backtracefilter.rb too, that is
+    required from assertions.rb, and raises `SyntaxError` twice.  As the
+    latter file always requires the former file, the second `require`
+    doesn't make sense.
+
+diff --git a/lib/test/unit/assertions.rb b/lib/test/unit/assertions.rb
+index 3befb93..47ff9ed 100644
+--- a/lib/test/unit/assertions.rb
++++ b/lib/test/unit/assertions.rb
+@@ -9,17 +9,6 @@ require_relative 'util/memory-usage'
+ require_relative 'util/method-owner-finder'
+ require_relative 'diff'
+ 
+-begin
+-  $VERBOSE, verbose = nil, $VERBOSE
+-  require 'power_assert'
+-rescue LoadError, SyntaxError
+-  if defined?(::PowerAssert)
+-    ::Object.send(:remove_const, :PowerAssert)
+-  end
+-ensure
+-  $VERBOSE = verbose
+-end
+-
+ module Test
+   module Unit
+ 
+diff --git a/lib/test/unit/util/backtracefilter.rb b/lib/test/unit/util/backtracefilter.rb
+index 7991e8b..be56f40 100644
+--- a/lib/test/unit/util/backtracefilter.rb
++++ b/lib/test/unit/util/backtracefilter.rb
+@@ -1,9 +1,12 @@
+ begin
++  $VERBOSE, verbose = nil, $VERBOSE
+   require 'power_assert'
+ rescue LoadError, SyntaxError
+   if defined?(::PowerAssert)
+     ::Object.send(:remove_const, :PowerAssert)
+   end
++ensure
++  $VERBOSE = verbose
+ end
+ 
+ module Test
